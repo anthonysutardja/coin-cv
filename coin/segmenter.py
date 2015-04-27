@@ -20,7 +20,16 @@ def create_coin_mask(bgr_image):
     kernel = np.ones((3, 3), np.uint8)
     gray_im = cv2.cvtColor(bgr_image, cv2.cv.CV_BGR2GRAY)
 
-    _, thresh = cv2.threshold(gray_im, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    thresh1 = cv2.adaptiveThreshold(
+        gray_im, 255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV,
+        51, 10
+    )
+    _, thresh2 = cv2.threshold(gray_im, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    thresh = thresh1 + thresh2
+
     closing = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
     opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel, iterations=6)
 
@@ -41,4 +50,8 @@ def create_coin_mask(bgr_image):
     cv2.grabCut(bgr_image, mask, None, bgdModel, fgdModel, 5, cv2.GC_INIT_WITH_MASK)
     overlay_mask = np.where((mask == cv2.GC_FGD) | (mask == cv2.GC_PR_FGD), 1, 0).astype('uint8')
 
-    return overlay_mask
+    # Clean up the mask
+    kernel = np.ones((4, 4), np.uint8)
+    refined_overlay_mask = cv2.morphologyEx(overlay_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+
+    return refined_overlay_mask
