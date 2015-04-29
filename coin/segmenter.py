@@ -28,7 +28,8 @@ def create_coin_mask(bgr_image):
     )
     _, thresh2 = cv2.threshold(gray_im, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-    thresh = thresh1 + thresh2
+    # thresh = thresh1 + thresh2
+    thresh = thresh2
 
     closing = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
     opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel, iterations=6)
