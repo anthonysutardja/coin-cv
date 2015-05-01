@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import cv2
 import numpy as np
-
+import coin.utils
 
 def create_coin_mask(bgr_image):
     """Returns a mask for the coins in the image.
@@ -56,3 +56,25 @@ def create_coin_mask(bgr_image):
     refined_overlay_mask = cv2.morphologyEx(overlay_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
 
     return refined_overlay_mask
+
+def create_better_mask(imgPath):
+    '''
+    Takes in an image path and returns a better mask of the coins in that image
+    '''
+    img = coin.utils.resize_image(cv2.imread(imgPath))[0]
+    sat = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)[:,:,2]
+    sat = cv2.medianBlur(sat, 11)
+    thresh = cv2.adaptiveThreshold(sat , 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C , cv2.THRESH_BINARY, 401, 10);
+    h, w = img.shape[:2]
+    mask = thresh/255*3
+
+    bgdModel = np.zeros((1,65),np.float64)
+    fgdModel = np.zeros((1,65),np.float64)
+    rect = (50,50,np.shape(img)[1]-100,np.shape(img)[0]-100)
+    cv2.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv2.GC_INIT_WITH_MASK)
+
+    mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
+    
+    kernel = np.ones((4,4),np.uint8)
+    refined_mm = cv2.morphologyEx(mask2,cv2.MORPH_CLOSE,kernel, iterations = 2)
+    return refined_mm
