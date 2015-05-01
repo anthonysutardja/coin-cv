@@ -77,4 +77,8 @@ def create_better_mask(imgPath):
     
     kernel = np.ones((4,4),np.uint8)
     refined_mm = cv2.morphologyEx(mask2,cv2.MORPH_CLOSE,kernel, iterations = 2)
+    ones = sum((refined_mm == 1).astype('int').flatten())
+    zeros = sum((refined_mm == 0).astype('int').flatten())
+    if (ones > zeros):
+        return (refined_mm + 1) % 2
     return refined_mm
