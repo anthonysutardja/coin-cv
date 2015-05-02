@@ -82,3 +82,12 @@ def create_better_mask(imgPath, desiredSize=500):
     if (ones > zeros):
         return (refined_mm + 1) % 2, scale
     return refined_mm, scale 
+
+def segmentImage(img, centers, radii):
+    results = []
+    for i in xrange(radii.shape[0]):
+        x = centers[i][0]
+        y = centers[i][1]
+        r = radii[i][0]
+        results.append(img[y-(r*1.2):y+r,x-(r*1.2):x+r,:])
+    return results
