@@ -57,11 +57,11 @@ def create_coin_mask(bgr_image):
 
     return refined_overlay_mask
 
-def create_better_mask(imgPath):
+def create_better_mask(imgPath, desiredSize=500):
     '''
     Takes in an image path and returns a better mask of the coins in that image
     '''
-    img = coin.utils.resize_image(cv2.imread(imgPath))[0]
+    img, scale = coin.utils.resize_image(cv2.imread(imgPath), desiredSize)
     sat = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)[:,:,2]
     sat = cv2.medianBlur(sat, 11)
     thresh = cv2.adaptiveThreshold(sat , 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C , cv2.THRESH_BINARY, 401, 10);
@@ -80,5 +80,5 @@ def create_better_mask(imgPath):
     ones = sum((refined_mm == 1).astype('int').flatten())
     zeros = sum((refined_mm == 0).astype('int').flatten())
     if (ones > zeros):
-        return (refined_mm + 1) % 2
-    return refined_mm
+        return (refined_mm + 1) % 2, scale
+    return refined_mm, scale 

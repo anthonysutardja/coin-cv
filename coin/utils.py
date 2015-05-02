@@ -3,7 +3,16 @@ import cv2
 
 import numpy as np
 import matlab
+import os.path as op
+import matlab
+import matplotlib.pyplot as plt
+import coin.segmenter
+from matplotlib.patches import Rectangle
+from matlab import engine
 
+def load_matlab_util(matlab_engine):
+    ml_path = op.join(op.dirname(op.realpath(__file__)), 'matlab')
+    matlab_engine.addpath(matlab_engine.genpath(ml_path))
 
 def resize_image(im, desired_size=1000):
     biggest_dim = max(im.shape)
@@ -15,27 +24,28 @@ def create_pad_mask(im, padding=50):
     np.zeros((h, w), )
     return np.pad(np.zeros((h - (padding * 2), w - (padding * 2))), padding, mode='constant', constant_values=1)
 
-numpy2matlab_type = {
-    np.int64         : matlab.int64,
-    np.bool_         : matlab.int8,
-    np.int8          : matlab.int8,
-    np.int16         : matlab.int16,
-    np.int32         : matlab.int32,
-    np.int64         : matlab.int64,
-    np.uint8         : matlab.uint8,
-    np.uint16        : matlab.uint16,
-    np.uint32        : matlab.uint32,
-    np.uint64        : matlab.uint64,
-    np.float16       : matlab.single,
-    np.float32       : matlab.single,
-    np.float64       : matlab.double
-}
+def prepare_mask_for_matlab(mask):
+    if np.max(mask) == 1:
+        mask = mask*255
+    ml_mask = matlab.uint8(mask.flatten('F').astype('uint8').tolist())
+    ml_mask.reshape(mask.shape)
+    return ml_mask
 
-def numpy2matlab(np_arr):
-    np_type = np_arr.dtype.type
-    ml_arr_klass = numpy2matlab_type.get(np_type, None)
-    if not ml_arr_klass:
-        raise ValueError('Cannot convert numpy type {0} to matlab array.'.format(np_type))
-    ml_arr = ml_arr_klass(np_arr.flatten().tolist())
-    ml_arr.reshape(np_arr.shape)
-    return ml_arr
+def draw_bounding_boxes(img, centers, radii):
+    _, subplt = plt.subplots(1,1)
+    subplt.imshow(img)
+    subplt.scatter(centers[:,0], centers[:,1])
+    for i in range(radii.shape[0]):
+        x = centers[i][0]
+        y = centers[i][1]
+        r = radii[i][0]
+        subplt.add_patch(Rectangle((x - r, y - r), r * 2, r * 2, facecolor='green', edgecolor='green', alpha=0.3))
+
+def doall(fileName, eng):
+    img = cv2.imread(fileName)
+    mask, scale = coin.segmenter.create_better_mask(fileName, 500)
+    ml_mask = prepare_mask_for_matlab(mask)
+    cr = eng.findCircles(ml_mask, scale)
+    centers = np.array(cr['centers'])
+    radii = np.array(cr['radii'])
+    draw_bounding_boxes(img, centers, radii)
