@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {font-family: 'Helvetica';}
+      .wrapper {
+        width: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .wrapper img {
+        width: 100%;
+      }
+      .wrapper > .left {
+        align-self: flex-start;
+          margin: 20px;
+      }
+      .wrapper > .right {
+        align-self: flex-start;
+          margin: 20px;
+      }
+      .hidden {
+        display: none;
+      }
+      .red {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <img src="static/coin_img/{{ file_name }}" />
+    </div>
+    <div class="wrapper">
+      <div class="left">
+        <h2 id="a">A - penny</h2>
+        <h2 id="s">S - nickel</h2>
+        <h2 id="d">D - dime</h2>
+        <h2 id="f">F - quarter</h2>
+      </div>
+      <div class="right">
+        <h2 id="j">J - heads</h2>
+        <h2 id="k">K - tails</h2>
+      </div>
+    </div>
+    <div class="hidden">
+      <h1>derp</h1>
+      <form id="ff" action="/" method="POST">
+        <input type="text" name="filename" value="{{ file_name }}"/>
+        <input type="text" name="coin" value="" />
+        <input type="text" name="face" value="" />
+      </form>
+    </div>
+    <script src="static/js/jquery.js"></script>
+    <script>
+      var selectedCoin = null;
+      var selectedFace = null;
+
+      var submit = function(coin, face) {
+        $('input[name=coin]').val(coin);
+        $('input[name=face]').val(face);
+        $('#ff').submit();
+      };
+
+      $(document).ready(function() {
+        $(document).keypress(function(e) {
+          var allowedChars = ['a', 's', 'd', 'f', 'j', 'k', ' '];
+          var coins = ['a', 's', 'd', 'f'];
+          var faces = ['j', 'k'];
+          var c = String.fromCharCode(e.which);
+          if ($.inArray(c, allowedChars) !== -1) {
+            if (c === ' ') {
+              // submit
+              if (selectedCoin !== null && selectedFace !== null) {
+                console.log('submit', selectedCoin, selectedFace);
+                submit(selectedCoin, selectedFace);
+              }
+            } else if ($.inArray(c, coins) !== -1) {
+              // is coin
+              if (selectedCoin !== null) {
+                $('.left').find('h2').removeClass('red');
+              }
+              $('#' + c).addClass('red');
+              selectedCoin = c;
+            } else {
+              // is faces
+              if (selectedFace !== null) {
+                $('.right').find('h2').removeClass('red');
+              }
+              $('#' + c).addClass('red');
+              selectedFace = c;
+            }
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
