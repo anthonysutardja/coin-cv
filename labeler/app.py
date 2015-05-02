@@ -23,15 +23,15 @@ CLASS_TO_LABEL = {
 }
 
 KEY_TO_COIN = {
-    'a': 'P',
-    's': 'N',
+    'p': 'P',
+    'n': 'N',
     'd': 'D',
-    'f': 'Q',
+    'q': 'Q',
 }
 
 KEY_TO_FACE = {
-    'j': 'H',
-    'k': 'T',
+    'h': 'H',
+    't': 'T',
 }
 
 
@@ -52,8 +52,12 @@ class Classification(object):
         return random.choice(list(self.unclassified))
 
     def identify(self, file_name, numKey, faceKey):
-        cl = convert_keys_to_classification(numKey, faceKey)
-        label = CLASS_TO_LABEL[cl]
+        if numKey == 'Z':
+            cl = 'BAD'
+            label = 0
+        else:
+            cl = convert_keys_to_classification(numKey, faceKey)
+            label = CLASS_TO_LABEL[cl]
         with open(OUTPUT_FILE_NAME, 'a') as f:
             f.write('{0} {1} {2}\n'.format(file_name, label, cl))
         self.unclassified.remove(str(file_name))

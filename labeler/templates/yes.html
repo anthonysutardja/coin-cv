@@ -35,14 +35,14 @@
     </div>
     <div class="wrapper">
       <div class="left">
-        <h2 id="a">A - penny</h2>
-        <h2 id="s">S - nickel</h2>
+        <h2 id="p">P - penny</h2>
+        <h2 id="n">N - nickel</h2>
         <h2 id="d">D - dime</h2>
-        <h2 id="f">F - quarter</h2>
+        <h2 id="q">Q - quarter</h2>
       </div>
       <div class="right">
-        <h2 id="j">J - heads</h2>
-        <h2 id="k">K - tails</h2>
+        <h2 id="h">H - heads</h2>
+        <h2 id="t">T - tails</h2>
       </div>
     </div>
     <div class="hidden">
@@ -66,9 +66,9 @@
 
       $(document).ready(function() {
         $(document).keypress(function(e) {
-          var allowedChars = ['a', 's', 'd', 'f', 'j', 'k', ' '];
-          var coins = ['a', 's', 'd', 'f'];
-          var faces = ['j', 'k'];
+          var allowedChars = ['p', 'n', 'd', 'q', 'h', 't', ' ', ';'];
+          var coins = ['p', 'n', 'd', 'q'];
+          var faces = ['h', 't'];
           var c = String.fromCharCode(e.which);
           if ($.inArray(c, allowedChars) !== -1) {
             if (c === ' ') {
@@ -77,6 +77,8 @@
                 console.log('submit', selectedCoin, selectedFace);
                 submit(selectedCoin, selectedFace);
               }
+            } else if (c === ';') {
+                submit('Z', 'Z');
             } else if ($.inArray(c, coins) !== -1) {
               // is coin
               if (selectedCoin !== null) {
