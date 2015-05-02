@@ -9,4 +9,8 @@ setup(
     url='http://stck.co',
     packages=find_packages(),
     include_package_data=True,
+    entry_points="""
+        [console_scripts]
+        coin-segment-extract=coin.extractor:main
+    """
 )
