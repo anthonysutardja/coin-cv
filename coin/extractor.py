@@ -4,6 +4,9 @@ import sys
 
 import numpy as np
 from cv2 import imwrite
+import coin.segmenter
+import coin.utils
+from matlab import engine
 
 
 FAKE_DATA = [
@@ -21,11 +24,11 @@ def get_files(input_directory):
     return image_files
 
 
-def process_image(image_file_name, input_directory, output_directory):
+def process_image(image_file_name, input_directory, output_directory, eng):
     image_file_path = os.path.join(input_directory, image_file_name)
     # Do something
     # Get a list of images
-    segmented_images = FAKE_DATA
+    segmented_images = coin.segmenter.processImg(image_file_path, eng)
     for idx, segmented_image in enumerate(segmented_images):
         image_name = "{0}-{1}.jpg".format(
             os.path.splitext(image_file_name)[0],
@@ -48,9 +51,12 @@ def main():
         print "input_directory and/or output_directory are not directories!"
         sys.exit(1)
 
+    eng = engine.start_matlab()
+    coin.utils.load_matlab_util(eng)
+
     image_files = get_files(input_directory)
     for image_file in image_files:
-        process_image(image_file, input_directory, output_directory)
+        process_image(image_file, input_directory, output_directory, eng)
 
     sys.exit(0)
 

@@ -45,13 +45,3 @@ def draw_bounding_boxes(img, centers, radii):
     else:
         print("No coins found")
 
-def doall(fileName, eng):
-    now = time.time()
-    img = cv2.imread(fileName)
-    mask, scale = coin.segmenter.create_better_mask(fileName, 1000)
-    ml_mask = prepare_mask_for_matlab(mask)
-    cr = eng.findCircles(ml_mask, scale)
-    centers = np.array(cr['centers'])
-    radii = np.array(cr['radii'])
-    draw_bounding_boxes(img, centers, radii)
-    print(time.time()-now)

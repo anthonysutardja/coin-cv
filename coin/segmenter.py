@@ -91,3 +91,23 @@ def segmentImage(img, centers, radii):
         r = radii[i][0]
         results.append(img[y-(r*1.2):y+r,x-(r*1.2):x+r,:])
     return results
+
+def processImgBounds(fileName, eng):
+    now = time.time()
+    img = cv2.imread(fileName)
+    mask, scale = coin.segmenter.create_better_mask(fileName, 1000)
+    ml_mask = prepare_mask_for_matlab(mask)
+    cr = eng.findCircles(ml_mask, scale)
+    centers = np.array(cr['centers'])
+    radii = np.array(cr['radii'])
+    draw_bounding_boxes(img, centers, radii)
+    print(time.time()-now)
+
+def processImg(fileName, eng):
+    img = cv2.imread(fileName)
+    mask, scale = create_better_mask(fileName, 1000)
+    ml_mask = coin.utils.prepare_mask_for_matlab(mask)
+    cr = eng.findCircles(ml_mask, scale)
+    centers = np.array(cr['centers'])
+    radii = np.array(cr['radii'])
+    return segmentImage(img, centers, radii)
