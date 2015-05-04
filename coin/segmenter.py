@@ -2,6 +2,8 @@
 import cv2
 import numpy as np
 import coin.utils
+import time
+import matplotlib.pyplot as plt
 
 def create_coin_mask(bgr_image):
     """Returns a mask for the coins in the image.
@@ -58,13 +60,20 @@ def create_coin_mask(bgr_image):
     return refined_overlay_mask
 
 def create_better_mask(imgPath, desiredSize=500):
-    '''
-    Takes in an image path and returns a better mask of the coins in that image
-    '''
+    """Returns a mask for the coins in the image
+    Applies an adaptive threshold to a blurred value space of the image to get an initial mask guess
+    Refines this mask using the grabCut algorithm
+    Then, holes are closed using dilation followed by erosion morphological transformation
+    :params: an image path
+    :return: 2D binary array with original image's size
+    """
     img, scale = coin.utils.resize_image(cv2.imread(imgPath), desiredSize)
-    sat = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)[:,:,2]
-    sat = cv2.medianBlur(sat, 11)
-    thresh = cv2.adaptiveThreshold(sat , 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C , cv2.THRESH_BINARY, 401, 10);
+    v = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)[:,:,2]
+    h = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)[:,:,0]
+    if (np.mean(h[1:10, :]) + np.mean(h[:, 1:10]) + np.mean(h[:,-10:-1]) + np.mean(h[-10:-1,:]) > 480):
+        v = h
+    v = cv2.medianBlur(v, 11)
+    thresh = cv2.adaptiveThreshold(v , 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C , cv2.THRESH_BINARY, 401, 10);
     h, w = img.shape[:2]
     mask = thresh/255*3
 
@@ -84,6 +93,10 @@ def create_better_mask(imgPath, desiredSize=500):
     return refined_mm, scale 
 
 def segmentImage(img, centers, radii):
+    """
+    :params: image matrix, located centers, located radii
+    :return: a list of nxmx3 matricies which are detected coins
+    """
     results = []
     for i in xrange(radii.shape[0]):
         x = centers[i][0]
@@ -92,7 +105,21 @@ def segmentImage(img, centers, radii):
         results.append(img[y-(r*1.2):y+r,x-(r*1.2):x+r,:])
     return results
 
+def computeClassifications(coins):
+    """
+    :params: list of coin images
+    """
+    results = []
+    for coin in coins:
+        # TODO: run classification on coins, append result to results
+        results.append("coin")
+    return results
+
 def processImgBounds(fileName, eng):
+    """
+    finds the coins in the image and graphs it with bounding boxes around coins
+    :params: file path, matlab engine
+    """
     now = time.time()
     img = cv2.imread(fileName)
     mask, scale = coin.segmenter.create_better_mask(fileName, 1000)
@@ -104,6 +131,10 @@ def processImgBounds(fileName, eng):
     print(time.time()-now)
 
 def processImg(fileName, eng):
+    """
+    :params: file path, matlab engine
+    :return: a list of nxmx3 matricies which are detected coins
+    """
     img = cv2.imread(fileName)
     mask, scale = create_better_mask(fileName, 1000)
     ml_mask = coin.utils.prepare_mask_for_matlab(mask)
@@ -111,3 +142,22 @@ def processImg(fileName, eng):
     centers = np.array(cr['centers'])
     radii = np.array(cr['radii'])
     return segmentImage(img, centers, radii)
+
+def processImageforJSON(fileName, eng):
+    '''
+    Use this one for the webapp
+    :params: file path, matlab engine
+    :return: JSON representing all the center, radii, classification of the coins found
+    '''
+    img = cv2.imread(fileName)
+    mask, scale = create_better_mask(fileName, 1000)
+    ml_mask = coin.utils.prepare_mask_for_matlab(mask)
+    cr = eng.findCircles(ml_mask, scale)
+    centers = np.array(cr['centers'])
+    radii = np.array(cr['radii'])
+    coins = segmentImage(img, centers, radii)
+    cl = computeClassifications(coins)
+    detections = []
+    for i in xrange(radii.shape[0]):
+        detections.append({"x":centers[i][0], "y":centers[i][1], "r":radii[i][0], "cl":cl[i]})
+    return {"size": {"h": img.shape[0], "w": img.shape[1]}, "detections": detections}

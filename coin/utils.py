@@ -11,6 +11,11 @@ from matplotlib.patches import Rectangle
 from matlab import engine
 import time
 
+def getEngine():
+    eng = engine.start_matlab()
+    load_matlab_util(eng)
+    return eng
+
 def load_matlab_util(matlab_engine):
     ml_path = op.join(op.dirname(op.realpath(__file__)), 'matlab')
     matlab_engine.addpath(matlab_engine.genpath(ml_path))
@@ -33,9 +38,9 @@ def prepare_mask_for_matlab(mask):
     return ml_mask
 
 def draw_bounding_boxes(img, centers, radii):
-    _, subplt = plt.subplots(1,1)
+    fig, subplt = plt.subplots(1,1)
     if (centers.shape[0] > 0):
-        subplt.imshow(img)
+        subplt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         subplt.scatter(centers[:,0], centers[:,1])
         for i in range(radii.shape[0]):
             x = centers[i][0]
@@ -44,4 +49,6 @@ def draw_bounding_boxes(img, centers, radii):
             subplt.add_patch(Rectangle((x - r, y - r), r * 2, r * 2, facecolor='green', edgecolor='green', alpha=0.3))
     else:
         print("No coins found")
+    extent = subplt.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    fig.savefig('figure.png', bbox_inches=extent)
 
