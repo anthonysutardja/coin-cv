@@ -1,0 +1,186 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+        <script type="text/javascript" src="static/js/jquery.filedrop.js"></script>
+        <script type="text/javascript" src="static/js/upload.js"></script>
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>
+    </head>
+
+    <body>
+        <style>
+            body {
+                margin: 0;
+                margin-bottom: 50px;
+            }
+            h1, p {
+                font-family: "Open Sans", sans-serif;
+                font-weight: 300;
+            }
+            h1 {
+                margin: 0;
+            }
+            #topbar {
+                padding: 30px;
+                margin-bottom: 20px;
+                background-color: #424242;
+                color: #F5F5F5;
+            }
+            .emptyDropbox {
+                border: 5px dashed #afafaf;
+                padding: 100px 50px;
+                margin: 0px 10%;
+            }
+            #copy-move-vis {
+                position: relative;
+                width: 100%;
+                padding: 0;
+                margin-top: 15px;
+                margin-bottom: 30px;
+            }
+            .vis-wrap img{
+                width: 50%;
+            }
+            .vis-wrap {
+                margin-top: 20px;
+                margin-bottom: 30px;
+                position: relative;
+            }
+            .coinLabel {
+                opacity: 0;
+                cursor: default;
+            }
+            .coinLabel:hover {
+                opacity: 1;
+            }
+            .yesButton, .noButton {
+                border-radius: 10px;
+                color: #fff;
+                font-size: 15px;
+                padding: 15px;
+                border: none;
+                cursor: pointer;
+                font-family: "Open Sans", sans-serif;
+                font-weight: 300;
+                margin: 0 10px; 
+            }
+            .yesButton {
+                background: #8BC34A;
+            }
+            .yesButton:hover {
+                background-color: #9CCC65;
+            }
+            .noButton {
+                background: #F44336;
+            }
+            .noButton:hover {
+                background: #EF5350;
+            }
+        </style>
+        <script>
+            var data;
+            function fetchData() {
+                var im = d3.select('#copy-move-vis img').node();
+                var imSize = im.getBoundingClientRect();
+                svg = d3.select('#copy-move-vis').append('svg')
+                                                 .attr('height', imSize.height)
+                                                 .attr('width', imSize.width)
+                                                 .style('position', 'absolute')
+                                                 .style('top', '0')
+                                                 .style('left', '25%');
+                rect = svg.append("rect")
+                        .attr("x", 0)
+                        .attr("y", 0)
+                        .attr("width", 5)
+                        .attr("fill", "#F44336")
+                        .attr("opacity", .7)
+                        .attr("height", imSize.height);
+                scan = setInterval(function(){
+                    rect.transition()
+                        .duration(2000)
+                        .attr("x", imSize.width - 5);
+                    rect.transition()
+                        .delay(2000)
+                        .duration(2000)
+                        .attr("x", 0);
+                }, 4000);
+                d3.json("/process", function(e, j) {
+                        clearInterval(scan);
+                        data = j;
+                        rect.remove();
+                        showCircles(j);
+                        });
+            }
+            function resizeData() {
+                var im = d3.select('#copy-move-vis img').node();
+                var imSize = im.getBoundingClientRect();
+                var hRatio = data.size.h/imSize.height;
+                var circle = svg.selectAll("circle")
+                                .data(data.detections) 
+                                .transition()
+                                .attr("cy", function(d) { return d.y/hRatio;})
+                                .attr("cx", function(d) { return d.x/hRatio; })
+                                .attr("r", function(d) { return d.r/hRatio; });
+                var text = svg.selectAll("text")
+                              .data(data.detections)
+                              .transition()
+                              .attr("y", function(d) { return d.y/hRatio;})
+                              .attr("x", function(d) { return d.x/hRatio - d.r/hRatio/4; });
+            }
+
+            function showCircles(data) {
+                var im = d3.select('#copy-move-vis img').node();
+                var imSize = im.getBoundingClientRect();
+                var hRatio = data.size.h/imSize.height;
+
+                var circle = svg.selectAll("circle")
+                    .data(data.detections);
+
+                var circleEnter = circle.enter()
+                                        .append("circle")
+                                        .attr("cy", function(d) { return d.y/hRatio;})
+                                        .attr("cx", function(d) { return d.x/hRatio; })
+                                        .attr("r", function(d) { return d.r/hRatio; })
+                                        .attr("stroke", "#8BC34A")
+                                        .attr("stroke-width", 3)
+                                        .attr("fill", "none");
+                var text = svg.selectAll("text")
+                              .data(data.detections)
+                              .enter()
+                              .append("text")
+                              .text(function(d){return d.cl;})
+                              .attr("fill", "white")
+                              .attr("y", function(d) { return d.y/hRatio;})
+                              .attr("x", function(d) { return d.x/hRatio - d.r/hRatio/4; })
+                              .attr("class", "coinLabel");
+            }
+            function itemOver() {
+                $(".emptyDropbox").css("border-color", "#4CAF50");
+            }
+            function itemGone() {
+                $(".emptyDropbox").css("border-color", "#afafaf");
+            }
+            function itemDropped() {
+                $("#dropbox").removeClass("emptyDropbox");
+            }
+            function reset() {
+                location.reload();
+            }
+        </script>
+
+        <div id="topbar" align="center">
+            <h1>Coin Counter</h1>
+        </div>
+        <div id="dropbox" class="emptyDropbox" align="center" ondragover="itemOver(event)" onmouseleave="itemGone(event)" ondrop="itemDropped(event)">
+            <span class="message"><p>Drop images here to upload.</p>
+                <p>or..</p>
+                <input type="file" capture="camera" accept="image/*" id="cameraInput" name="cameraInput">
+            </span>
+        </div>
+
+        <script>
+            $(window).resize(resizeData);
+        </script>
+    </body>
+</html>
