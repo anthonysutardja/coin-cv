@@ -5,6 +5,8 @@ import coin.utils
 import time
 import matplotlib.pyplot as plt
 
+from coin.predictor import predict_bgr_uint8_images
+
 def create_coin_mask(bgr_image):
     """Returns a mask for the coins in the image.
 
@@ -109,11 +111,7 @@ def computeClassifications(coins):
     """
     :params: list of coin images
     """
-    results = []
-    for coin in coins:
-        # TODO: run classification on coins, append result to results
-        results.append("coin")
-    return results
+    return predict_bgr_uint8_images(coins)
 
 def processImgBounds(fileName, eng):
     """
@@ -143,6 +141,13 @@ def processImg(fileName, eng):
     radii = np.array(cr['radii'])
     return segmentImage(img, centers, radii)
 
+LABEL = {
+    'Q': 'Quarter',
+    'P': 'Penny',
+    'N': 'Nickel',
+    'D': 'Dime',
+}
+
 def processImageforJSON(fileName, eng):
     '''
     Use this one for the webapp
@@ -159,5 +164,6 @@ def processImageforJSON(fileName, eng):
     cl = computeClassifications(coins)
     detections = []
     for i in xrange(radii.shape[0]):
-        detections.append({"x":centers[i][0], "y":centers[i][1], "r":radii[i][0], "cl":cl[i]})
+        if cl[i] != 'BAD':
+            detections.append({"x":centers[i][0], "y":centers[i][1], "r":radii[i][0], "cl":LABEL[cl[i]]})
     return {"size": {"h": img.shape[0], "w": img.shape[1]}, "detections": detections}
