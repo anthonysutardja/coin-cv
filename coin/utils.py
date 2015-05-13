@@ -39,6 +39,7 @@ def prepare_mask_for_matlab(mask):
 
 def draw_bounding_boxes(img, centers, radii):
     fig, subplt = plt.subplots(1,1)
+    plt.axis('off')
     if (centers.shape[0] > 0):
         subplt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         subplt.scatter(centers[:,0], centers[:,1])
