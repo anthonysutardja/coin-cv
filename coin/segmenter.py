@@ -111,7 +111,7 @@ def computeClassifications(coins):
     """
     :params: list of coin images
     """
-    return predict_bgr_uint8_images(coins)
+    return predict_bgr_uint8_images([cv2.resize(c, (256, 256)) for c in coins])
 
 def processImgBounds(fileName, eng):
     """
